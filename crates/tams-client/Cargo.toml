@@ -1,0 +1,16 @@
+[package]
+name = "tams-client"
+version = "0.1.0"
+description = "HTTP client for the Time-Addressable Media Store (TAMS) API"
+edition.workspace = true
+license.workspace = true
+repository.workspace = true
+authors.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+tams-core = { path = "../tams-core" }
+reqwest = { workspace = true }
+url = { workspace = true }
+thiserror = { workspace = true }
+uuid = { workspace = true }
