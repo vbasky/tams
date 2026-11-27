@@ -1,5 +1,7 @@
 # tams
 
+![TAMS Banner](docs/banner.jpg)
+
 Rust implementation of the [Time-Addressable Media Store (TAMS)](https://tams.org/) API specification.
 
 TAMS is an open API specification developed by BBC Research & Development for storing, querying, and randomly accessing segmented media in a sample-accurate, time-addressable manner.
