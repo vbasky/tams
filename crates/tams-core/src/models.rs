@@ -7,9 +7,6 @@ use serde_json::Value;
 use uuid::Uuid;
 
 /// A timestamp in TAMS format (`seconds:nanoseconds`).
-///
-/// Nanosecond resolution. Seconds may be negative.
-/// See [App Note 0008](https://github.com/bbc/tams/blob/main/docs/appnotes/0008-timestamps-in-TAMS.md).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash)]
 pub struct Timestamp {
     pub seconds: i64,
@@ -25,7 +22,6 @@ impl Timestamp {
         }
     }
 
-    /// Zero timestamp.
     pub fn zero() -> Self {
         Self::new(0, 0)
     }
@@ -79,8 +75,6 @@ impl<'de> Deserialize<'de> for Timestamp {
 }
 
 /// A half-open timerange `[start_end)`.
-///
-/// Represented in the API as `[start_end)` by default.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct TimeRange {
     pub start: Timestamp,
@@ -103,7 +97,6 @@ impl FromStr for TimeRange {
     type Err = String;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        // Simplified parser for the common `[start_end)` form
         let s = s.trim();
         let (start_part, end_part) = s
             .strip_prefix('[')
@@ -130,7 +123,7 @@ impl<'de> Deserialize<'de> for TimeRange {
     }
 }
 
-/// A Source represents abstract content that can be realized by one or more Flows.
+/// Source.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Source {
     pub id: Uuid,
@@ -144,7 +137,7 @@ pub struct Source {
     pub tags: Option<serde_json::Map<String, Value>>,
 }
 
-/// A Flow is an immutable timeline of media grains.
+/// Flow.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Flow {
     pub id: Uuid,
@@ -162,9 +155,17 @@ pub struct Flow {
     pub timerange: Option<TimeRange>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub tags: Option<serde_json::Map<String, Value>>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub read_only: Option<bool>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub avg_bit_rate: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub max_bit_rate: Option<u64>,
 }
 
-/// URL information for getting or putting a media object.
+/// URL for get/put of a media object.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ObjectUrl {
     pub url: String,
@@ -176,7 +177,7 @@ pub struct ObjectUrl {
     pub storage_id: Option<Uuid>,
 }
 
-/// A Flow Segment maps media objects onto a portion of a Flow's timeline.
+/// Flow Segment.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlowSegment {
     pub timerange: TimeRange,
@@ -189,7 +190,7 @@ pub struct FlowSegment {
     pub key_frame_count: Option<u32>,
 }
 
-/// Request body for creating/registering a Flow Segment.
+/// Create Flow Segment request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct FlowSegmentCreate {
     pub object_id: String,
@@ -198,7 +199,7 @@ pub struct FlowSegmentCreate {
     pub ts_offset: Option<Timestamp>,
 }
 
-/// Request for storage allocation.
+/// Storage allocation request.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StorageAllocationRequest {
     #[serde(skip_serializing_if = "Option::is_none")]
@@ -207,7 +208,7 @@ pub struct StorageAllocationRequest {
     pub object_ids: Option<Vec<String>>,
 }
 
-/// Response from storage allocation.
+/// Storage allocation response.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StorageAllocation {
     pub put_urls: Vec<PutUrl>,
@@ -236,7 +237,7 @@ pub struct Service {
     pub extra: serde_json::Map<String, Value>,
 }
 
-/// Storage backend information.
+/// Storage backend.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct StorageBackend {
     pub id: Uuid,
@@ -244,4 +245,80 @@ pub struct StorageBackend {
     pub label: Option<String>,
     #[serde(skip_serializing_if = "Option::is_none")]
     pub r#type: Option<String>,
+}
+
+/// Profile.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Profile {
+    pub id: Uuid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub label: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub format: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub codec: Option<String>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
+}
+
+/// Webhook.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Webhook {
+    pub id: Uuid,
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_key_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub events: Option<Vec<String>>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
+}
+
+/// Webhook create request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebhookCreate {
+    pub url: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_key_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_key_value: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub events: Option<Vec<String>>,
+}
+
+/// Webhook update request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct WebhookUpdate {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub url: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_key_name: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub api_key_value: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub events: Option<Vec<String>>,
+}
+
+/// Object.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Object {
+    pub id: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flow_id: Option<Uuid>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
+}
+
+/// Flow delete request.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FlowDeleteRequest {
+    pub id: Uuid,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub flow_id: Option<Uuid>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub status: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub timerange: Option<TimeRange>,
+    #[serde(flatten)]
+    pub extra: serde_json::Map<String, Value>,
 }
