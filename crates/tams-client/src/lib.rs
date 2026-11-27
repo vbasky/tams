@@ -382,11 +382,21 @@ impl Client {
 
     /// DELETE /flows/{id}/segments
     pub async fn delete_segments(&self, flow_id: Uuid, timerange: Option<&str>) -> Result<()> {
-        let mut path = format!("flows/{flow_id}/segments");
+        let mut url = self
+            .base_url
+            .join(&format!("flows/{flow_id}/segments"))
+            .map_err(|e| Error::Other(format!("URL error: {e}")))?;
         if let Some(tr) = timerange {
-            path.push_str(&format!("?timerange={}", urlencoding::encode(tr)));
+            url.query_pairs_mut().append_pair("timerange", tr);
         }
-        self.delete(&path).await
+        let resp = self.http.delete(url).send().await?;
+        if !resp.status().is_success() && resp.status() != StatusCode::NO_CONTENT {
+            return Err(Error::Api {
+                status: resp.status().as_u16(),
+                message: resp.text().await.unwrap_or_default(),
+            });
+        }
+        Ok(())
     }
 
     // ==================== Storage ====================
