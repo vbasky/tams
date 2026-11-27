@@ -1,6 +1,6 @@
 # tams
 
-![TAMS Banner](docs/banner.jpg)
+![TAMS Banner](docs/banner.jpeg)
 
 Rust implementation of the [Time-Addressable Media Store (TAMS)](https://tams.org/) API specification.
 
