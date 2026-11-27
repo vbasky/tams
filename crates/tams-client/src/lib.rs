@@ -376,7 +376,7 @@ impl Client {
         flow_id: Uuid,
         segments: &[FlowSegmentCreate],
     ) -> Result<Vec<FlowSegment>> {
-        self.post(&format!("flows/{flow_id}/segments"), segments)
+        self.post(&format!("flows/{flow_id}/segments"), &segments)
             .await
     }
 
@@ -446,15 +446,15 @@ impl Client {
         self.request(Method::GET, path, None::<&()>).await
     }
 
-    async fn put<T: Serialize + DeserializeOwned>(&self, path: &str, body: &T) -> Result<T> {
+    async fn put<B: Serialize, R: DeserializeOwned>(&self, path: &str, body: &B) -> Result<R> {
         self.request(Method::PUT, path, Some(body)).await
     }
 
-    async fn put_empty<T: Serialize>(&self, path: &str, body: &T) -> Result<()> {
+    async fn put_empty<B: Serialize>(&self, path: &str, body: &B) -> Result<()> {
         self.request_empty(Method::PUT, path, Some(body)).await
     }
 
-    async fn post<T: Serialize, R: DeserializeOwned>(&self, path: &str, body: &T) -> Result<R> {
+    async fn post<B: Serialize, R: DeserializeOwned>(&self, path: &str, body: &B) -> Result<R> {
         self.request(Method::POST, path, Some(body)).await
     }
 
@@ -462,11 +462,11 @@ impl Client {
         self.request_empty(Method::DELETE, path, None::<&()>).await
     }
 
-    async fn request<T: Serialize, R: DeserializeOwned>(
+    async fn request<B: Serialize, R: DeserializeOwned>(
         &self,
         method: Method,
         path: &str,
-        body: Option<&T>,
+        body: Option<&B>,
     ) -> Result<R> {
         let url = self.join(path)?;
         let mut req = self.http.request(method, url);
@@ -477,11 +477,11 @@ impl Client {
         self.handle_response(resp).await
     }
 
-    async fn request_empty<T: Serialize>(
+    async fn request_empty<B: Serialize>(
         &self,
         method: Method,
         path: &str,
-        body: Option<&T>,
+        body: Option<&B>,
     ) -> Result<()> {
         let url = self.join(path)?;
         let mut req = self.http.request(method, url);
